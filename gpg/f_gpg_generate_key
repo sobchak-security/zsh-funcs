@@ -1,0 +1,179 @@
+#! /usr/bin/env zsh
+
+# Copyright (c) 2022 Remo Ronca 106963724+sobchak-security@users.noreply.github.com
+# MIT License
+
+# NOTE print help with perldoc core/f_gpg_generate_key
+
+# $1    - user name
+# $2    - user email address
+# $3    - passphrase
+# $4    - comment
+# [$5]  - keyring
+# [$6]  - trustdb
+function f_gpg_generate_key() {
+    local __keyring=${5:-$(gpgconf --list-dirs homedir)/pubring.kbx }
+    local __trustdb=${6:-$(gpgconf --list-dirs homedir)/trustdb.gpg }
+
+    # with --no-tty set, the corresponding error message is surpressed
+    [[ ${#1} -lt 5 ]] && { f_log ERROR "name must be at least 5 characters long" ; return 1 ; }
+
+    mkdir -p ${__keyring:h} ${__trustdb:h}
+    gpg --quiet --no-tty --no-verbose --no-greeting --no-default-keyring \
+        --with-colons --no-auto-check-trustdb --always-trust \
+        --trustdb-name ${__trustdb} --keyring ${__keyring} \
+        --pinentry-mode loopback --passphrase "${3}" \
+        --expert --full-gen-key --command-file <(cat <<-EOF 
+${GPG_GENERATE_KEY_TYPE:-9}
+${GPG_GENERATE_ECC_CURVE:-1}
+${GPG_GENERATE_VALIDITY:-1}
+y
+${1}
+${2}
+${4}
+O
+EOF
+)
+}
+
+[[ -z ${(%):-%x} ]] && f_gpg_generate_key ${@}
+
+
+: <<END_OF_DOCS
+
+Generates a key pair in a GPG keyring.
+
+=head1 NAME
+
+f_gpg_generate_key--Exports a public GPG key.
+
+=head1 SYNOPSIS
+
+f_gpg_generate_key name email passphrase comment [keyring] [trustdb]
+
+=head1 ARGUMENTS
+
+=over
+
+=item name
+
+The name of the key custodian.
+
+NOTE the name must be at least 5 characters long.
+
+=item email
+
+The key custodian's email address.
+
+=item passphrase
+
+The keyring's passphrase.
+
+=item comment
+
+A comment describing the key pair. 
+
+=item keyring
+
+The keyring to search for name (default: ${GNUPGHOME}/pubring.kbx).
+
+NOTE if keyring is passed as an argument, the default keyring is not searched 
+for name.
+
+=item trustdb
+
+The trust database to use for this operation (default: ${GNUPGHOME}/trustdb.gpg)
+
+=back
+
+=head1 DESCRIPTION
+
+Generates a key pair for name in keyring.
+
+=head2 Key type
+
+Unless GPG_GENERATE_KEY_TYPE is set accordingly, an ECC key is generated.
+
+=over
+
+=item  (1) RSA and RSA (default)
+
+=item  (2) DSA and Elgamal
+
+=item  (3) DSA (sign only)
+
+=item  (4) RSA (sign only)
+
+=item  (7) DSA (set your own capabilities)
+
+=item  (8) RSA (set your own capabilities)
+
+=item  (9) ECC and ECC
+
+=item (10) ECC (sign only)
+
+=item (11) ECC (set your own capabilities)
+
+=item (13) Existing key
+
+=item (14) Existing key from card
+
+=back
+
+=head2 Curve
+
+Unless GPG_GENERATE_ECC_CURVE is set accordingly, Curve Ed25519 is used to generated the key pair.
+
+=over 
+
+=item (1) Curve 25519
+
+=item (3) NIST P-256
+
+=item (4) NIST P-384
+
+=item (5) NIST P-521
+
+=item (6) Brainpool P-256
+
+=item (7) Brainpool P-384
+
+=item (8) Brainpool P-512
+
+=item (9) secp256k1
+
+=back
+
+=head2 Validity
+
+Unless GPG_GENERATE_VALIDITY is set accordingly, the generated has no expiration.
+
+=over
+
+=item    0 = key does not expire
+
+=item <n>  = key expires in n days
+
+=item <n>w = key expires in n weeks
+
+=item <n>m = key expires in n months
+
+=item <n>y = key expires in n years
+
+=back
+
+=head1 EXAMPLES
+
+source gpg/f_gpg_generate_key ; f_gpg_generate_key user123 user123@domain.com passw0rd "demo key for user" ./tmp/pubring.kbx ./trustdb
+
+=head1 AUTHOR
+
+L<Remo Ronca|mailto:106963724+sobchak-security@users.noreply.github.com>
+
+=head1 LICENSE AND COPYRIGHT
+
+MIT License
+
+=cut
+
+END_OF_DOCS

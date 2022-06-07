@@ -1,0 +1,75 @@
+#! /usr/bin/env zsh
+
+# Copyright (c) 2022 Remo Ronca 106963724+sobchak-security@users.noreply.github.com
+# MIT License
+
+# NOTE print help with perldoc core/f_gpg_pubkey_id
+
+# $1    - user (email address)
+# [$2]  - keyring
+# [$3]  - trustdb
+function f_gpg_pubkey_id() {
+    local __keyring=${2:-$(gpgconf --list-dirs homedir)/pubring.kbx }
+    local __trustdb=${3:-$(gpgconf --list-dirs homedir)/trustdb.gpg }
+
+    gpg --quiet --no-tty --no-verbose --no-greeting --no-default-keyring \
+        --with-colons --no-auto-check-trustdb --always-trust \
+        --trustdb-name ${__trustdb} --keyring ${__keyring} \
+        --list-public-keys ${1} \
+    | grep '^pub:' | cut -d : -f 5 | tr -d '\n'
+}
+
+[[ -z ${(%):-%x} ]] && f_gpg_pubkey_id ${@}
+
+: <<END_OF_DOCS
+
+Prints a GPG public key's ID.
+
+=head1 NAME
+
+f_gpg_pubkey_id--Prints a public key's ID.
+
+=head1 SYNOPSIS
+
+f_gpg_pubkey_id name [keyring] [trustdb]
+
+=head1 ARGUMENTS
+
+=over
+
+=item name
+
+The user name or email address to search for.
+
+=item keyring
+
+The keyring to search for name (default: ${GNUPGHOME}/pubring.kbx).
+
+NOTE if keyring is passed as an argument, the default keyring is not searched 
+for name.
+
+=item trustdb
+
+The trust database to use for this operation (default: ${GNUPGHOME}/trustdb.gpg)
+
+=back
+
+=head1 DESCRIPTION
+
+Looks up name in keyring and writes its public ID key to STDOUT. 
+
+=head1 EXAMPLES
+
+source gpg/f_gpg_pubkey_id ; f_gpg_pubkey_id user@domain.com /path/to/pubring.kbx
+
+=head1 AUTHOR
+
+L<Remo Ronca|mailto:106963724+sobchak-security@users.noreply.github.com>
+
+=head1 LICENSE AND COPYRIGHT
+
+MIT License
+
+=cut
+
+END_OF_DOCS
