@@ -1,0 +1,124 @@
+#! /usr/bin/env zsh
+
+# Copyright (c) 2022 Remo Ronca 106963724+sobchak-security@users.noreply.github.com
+# MIT License
+
+# NOTE print help with perldoc core/f_random_string
+
+# [$1]  - string length in characters (default: 16)
+# [$2]  - character class (default: [:alnum:])
+function f_random_string() {
+    LC_ALL=C tr -dc "${2:-[:alnum:]}" < /dev/random | head -c ${1:-16}
+}
+
+[[ -z ${(%):-%x} ]] && f_random_string ${@}
+
+alias random_string='f_random_string'
+
+: <<END_OF_DOCS
+
+Generates a random string.
+
+=head1 NAME
+
+f_random_string--Generates a random string.
+
+=head1 SYNOPSIS
+
+f_random_string [length] [character class]
+
+=head1 ARGUMENTS
+
+=over 4
+
+=item length
+
+The length (in character of chosen character set) of the random string (default: 16).
+
+=item character class
+
+The character class(es) to be used to generate the random string (default: [:alnum:]).
+
+=over 8
+
+=item alnum
+    alphanumeric characters
+
+=item alpha
+    alphabetic characters
+
+=item blank
+    whitespace characters
+
+=item cntrl
+    control characters
+
+=item digit
+    numeric characters
+
+=item graph
+    graphic characters
+
+=item ideogram
+    ideographic characters
+
+=item lower
+    lower-case alphabetic characters
+
+=item phonogram
+    phonographic characters
+
+=item print
+    printable characters
+
+=item punct
+    punctuation characters
+
+=item rune 
+    valid characters
+
+=item space
+    space characters
+
+=item special
+    special characters
+
+=item upper
+    upper-case characters
+
+=item xdigit
+    hexadecimal characters
+
+=back
+
+=back
+
+=head1 DESCRIPTION
+
+Generates a random string using a specific character set.
+
+=head1 EXAMPLES
+
+source core/f_random_string ; f_random_string 12 "[:xdigit:]"
+
+
+=head1 SEE
+
+The general idea has been published by Vivek Gite here: 
+L<nixCraft|http://www.cyberciti.biz/faq/linux-random-password-generator>
+
+=head1 KNOWN PROBLEMS
+
+This function reads from /dev/random and, thus, might block.
+
+=head1 AUTHOR
+
+L<Remo Ronca|mailto:106963724+sobchak-security@users.noreply.github.com>
+
+=head1 LICENSE AND COPYRIGHT
+
+MIT License
+
+=cut
+
+END_OF_DOCS

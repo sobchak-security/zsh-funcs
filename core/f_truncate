@@ -1,0 +1,48 @@
+#! /usr/bin/env zsh
+
+# Copyright (c) 2022 Remo Ronca 106963724+sobchak-security@users.noreply.github.com
+# MIT License
+
+# NOTE print help with perldoc core/f_truncate
+
+# $@  - filenames...
+function f_truncate() {
+    for __f in ${@}; do 
+         [[ -f "${__f}" ]] && : > "${__f}" 2>/dev/null || { mkdir -p "${__f:h}" && touch "${__f}" ;}
+    done
+}
+
+[[ -z ${(%):-%x} ]] && f_truncate ${@}
+
+: <<END_OF_DOCS
+
+Truncates existing or creates empty files.
+
+=head1 NAME
+
+f_truncate--Truncates files.
+
+=head1 SYNOPSIS
+
+f_truncate files...
+
+=head1 DESCRIPTION
+
+Truncates an existing or creates an empty file, thereby ensuring an empty file 
+exists after f_truncate has been invoked.
+
+=head1 EXAMPLES
+
+source core/f_truncate ; f_truncate /path/to/existing-file ${TMPDIR}/non-existing-file
+
+=head1 AUTHOR
+
+L<Remo Ronca|mailto:106963724+sobchak-security@users.noreply.github.com>
+
+=head1 LICENSE AND COPYRIGHT
+
+MIT License
+
+=cut
+
+END_OF_DOCS

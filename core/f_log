@@ -1,0 +1,155 @@
+#! /usr/bin/env zsh
+
+# Copyright (c) 2022 Remo Ronca 106963724+sobchak-security@users.noreply.github.com
+# MIT License
+
+# NOTE print help with perldoc core/f_log
+
+# $1        - if more than one argument has been passed, the prefix label, 
+#             typically the log entry's severity, or a the string to be logged 
+#             otherwise
+# [$2]      - (format) string, if a prefix has been passed
+# [${@:3}]  - arguments ... 
+function f_log() {
+    local __fname
+    local __prefix
+    local __begin_set_color
+    local __end_set_color
+    local __color=black
+    local __out=${LOG_FILE:-/dev/stdout}
+    
+    if [[ ${#} -le 1 ]]; then 
+        __prefix=""
+    else
+        __prefix="[${(r:5:)1}]"
+
+        [[ ${1:u} =~ "(ERROR|FATAL)" ]] && __out=${LOG_FILE:-/dev/stderr}
+
+        if [[ -z ${LOG_FILE} && -z ${LOG_NO_COLORS} ]]; then
+            case ${1:u} in
+            (TRACE|VERBOSE|DEBUG))
+                __color=${LOG_COLOR_DEBUG:-gray} ;;
+            INFO)
+                __color=${LOG_COLOR_INFO:-black} ;;
+            WARN)
+                __color=${LOG_COLOR_WARN:-green} ;;
+            (ERROR|FATAL))
+                __color=${LOG_COLOR_ERROR:-red} ;;
+            esac
+
+            __begin_set_color=${(%):-%F{$__color}} 
+            __end_set_color=${(%):-%f}
+        fi
+
+        shift 
+    fi
+    # if a call to f_log is outside any function scope, the function name "main"
+    # is assigned as a default  
+    [[ ${#funcstack} -gt 1 ]] && __fname=${funcstack[-1]} || __fname="main" 
+    # NOTE that arguments may have been shifted, if a prefix has been assigned
+    
+
+    printf \
+"${__begin_set_color}"\
+"${(%):-%D %*} "\
+"${__fname} "\
+"($funcfiletrace[$#funcfiletrace])"\
+" - "\
+"${__prefix} "\
+"${1}"\
+"${__end_set_color}"\
+"\n" ${@:2} >> ${__out} 
+}
+
+[[ -z ${(%):-%x} ]] && f_log ${@}
+
+alias dlog='f_is_debug && f_log "DEBUG"'
+alias log='f_log "INFO"'
+alias warn='f_log "WARN"'
+alias error='f_log "ERROR"'
+
+: <<END_OF_DOCS
+
+Writes a log message to STDOUT/STDERR or appends it to a file.
+
+=head1 NAME
+
+f_log--Writes a log message.
+
+=head1 SYNOPSIS
+
+f_log message
+f_log severity message
+f_log severity format [arguments ...]
+
+=head1 ARGUMENTS
+
+=over
+
+=item message
+
+The log message.
+
+=item severity
+
+A prefix label which is written in enclosed brackets and is expected to indicate
+the message's secverity, e.g., TRACE, DEBUG, INFO, WARN, ERROR, FATAL.
+
+NOTE the severity determines the color of the log message. Also messages with a
+a severity of ERROR or FATAL are written to STDERR instead of STOUD (unless a 
+log messages are written to a file). 
+
+=item format
+
+The typical (C-like) printf format message. 
+
+=item arguments
+
+Arguments to be evaluated according to the format specification in format.
+
+=back
+
+=head1 DESCRIPTION
+
+Writes a log message with a default prefix to STDOUT or, in case severity is
+ERROR or FATAL, to STDERR. If only a message is passed, it is written without a 
+severity prefix. With a severity prefix, either a plain message or a printf-like 
+formatted message with corresponding arguments is printed instead.
+
+NOTE If the environment variable LOG_FILE is set, log messages are appended to 
+that file.
+
+=head2 Derived function name
+
+As part of the prefix, the function's name within which f_log has been called is
+included. For an "unscoped" call, the "main" is printed as the function's name.
+
+=head2 Aliases
+
+The dlog, log, warn, and error aliases facilitate the writing of log messages
+with a respective severity identifier. 
+
+=head2 Colors
+
+Unless log messages are written to LOG_FILE or the environment variable 
+LOG_NO_COLORS is set, the message's severity determines its coloring. To 
+override the default color scheme, use the environment variables LOG_COLOR_DEBUG,
+LOG_COLOR_INFO, LOG_COLOR_WARN, or LOG_COLOR_ERROR respectively.
+
+=head1 EXAMPLES
+
+source core/f_log ; f_log "log string only"
+
+source core/f_log ; f_log "INFO" "format string %d %x" 123 321
+
+=head1 AUTHOR
+
+L<Remo Ronca|mailto:106963724+sobchak-security@users.noreply.github.com>
+
+=head1 LICENSE AND COPYRIGHT
+
+MIT License
+
+=cut
+
+END_OF_DOCS

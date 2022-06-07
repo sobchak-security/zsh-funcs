@@ -1,0 +1,10 @@
+#! /usr/bin/env zsh
+
+# Copyright (c) 2022 Remo Ronca 106963724+sobchak-security@users.noreply.github.com
+# MIT License
+
+function f_is_debug() {
+    [[ ${DEBUG} -eq 1 || "${DEBUG:l}" == "y"* || "${DEBUG:l}" == "on" ]]
+}
+
+[[ -z ${(%):-%x} ]] && f_is_debug ${@}
