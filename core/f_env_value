@@ -1,0 +1,96 @@
+#! /usr/bin/env zsh
+
+# Copyright (c) 2022 Remo Ronca 106963724+sobchak-security@users.noreply.github.com
+# MIT License
+
+# NOTE print help with perldoc core/f_env_value
+
+# $1        - search pattern
+# [${2}]    - filename (otherwise input is read from STDIN)
+function f_env_value {
+    # NOTE on macOS, sed does not support non-capturing groups, even when the
+    # extended regular expression option -E is used.
+    # Enclosing the search pattern in a group allows for a moderate support
+    # of enhanced regular expressions, e.g., alternate matches. 
+    sed -En 's/^[[:space:]]*('"${1}"')[[:space:]]*(=|:=|:)[[:space:]]*([^#]*)(#.*)?$/\3/p' ${2:-/dev/stdin}
+}
+
+[[ -z ${(%):-%x} ]] && f_env_value ${@}
+
+: <<END_OF_DOCS
+
+Returns the assigned value to a variable name by parsing lines from a file or
+from STDIN.
+
+=head1 NAME
+
+f_env_value--Returns the value of an environment variable.
+
+=head1 SYNOPSIS
+
+f_env_value VAR_NAME [file | input from STDIN]
+
+=head1 ARGUMENTS
+
+=over
+
+=item VAR_NAME
+
+The variable name for which an assigned value is returned.
+
+=item file
+
+An input file. If no file argument is passed, input is read from STDIN.
+
+=back
+
+=head1 DESCRIPTION
+
+Assuming, that the input consists of lines where a value is assigned to name by
+one of the common assignment operators, the value is returned.
+
+Everything following after a # is treated as a comment and is not been returned
+as part of a value.
+
+NOTE VAR_NAME is processed as a regular expression pattern, thus several
+values may be returned as result. 
+
+=head1 EXAMPLES
+
+Let /path/to/file contain 
+
+VAR_NAME=value
+
+#or
+
+VAR_NAME: value
+
+#or 
+
+  VAR_NAME := value #some comment
+
+source core/f_env_value ; f_env_value VAR_NAME /path/to/file
+
+source core/f_env_value ; echo "ABC=123" | f_env_value 'abc|AB.?'
+
+=head1 AUTHOR
+
+L<Remo Ronca|mailto:106963724+sobchak-security@users.noreply.github.com>
+
+=head1 KNOWN PROBLEMS
+
+As sed on macOS does not support non-capturing groups, inline options like
+(?i) for case insensitivity are not allowed. For this reason, the search
+pattern is enclosed in a group, thereby at least supporting, for example, 
+alternate matches.
+
+Note though, that the grouping sequence should never be altered be the search
+pattern.
+
+=head1 LICENSE AND COPYRIGHT
+
+MIT License
+
+=cut
+
+END_OF_DOCS
