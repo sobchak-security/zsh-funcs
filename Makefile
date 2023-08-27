@@ -17,13 +17,12 @@ FOLDERS := $(shell find . -type d -depth 1 | grep -v '.*\.git' | sed -En 's;\./(
 TARGETS :=  $(patsubst %,$${ZDOTDIR}/%.zwc,${FOLDERS})
 # $(info TARGETS ${TARGETS})
 
-
 # see https://www.gnu.org/software/make/manual/html_node/Secondary-Expansion.html
 .SECONDEXPANSION:
 
-.PHONY: all
+.PHONY: zsh-funcs-compile
 
-all: ${TARGETS}
+zsh-funcs-compile: ${TARGETS}
 
 ${ZDOTDIR}/%.zwc: $$(wildcard %/f_*)
 	@printf "building (${*})\t ${@}\nfrom\t\t $(patsubst %,${*}/%,${^F})\nchanged\t\t ${?}\n"
