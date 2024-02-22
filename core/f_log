@@ -96,7 +96,7 @@ A prefix label which is written in enclosed brackets and is expected to indicate
 the message's secverity, e.g., TRACE, DEBUG, INFO, WARN, ERROR, FATAL.
 
 NOTE the severity determines the color of the log message. Also messages with a
-a severity of ERROR or FATAL are written to STDERR instead of STOUD (unless a 
+a severity of ERROR or FATAL are written to STDERR instead of STDOUT (unless a 
 log messages are written to a file). 
 
 =item format
