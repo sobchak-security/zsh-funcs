@@ -1,0 +1,140 @@
+#! /usr/bin/env zsh
+
+# Copyright (c) 2024 Remo Ronca 106963724+sobchak-security@users.noreply.github.com
+# MIT License
+
+# NOTE print help with perldoc core/f_mvrx
+
+# assuming, no options are passed
+# $1        - working directory
+# $2        - search pattern
+# $3        - replace pattern
+function f_mvrx {
+    for __arg in "$@"; do
+        shift
+        case "${__arg}" in
+        "--dry-run" | "-q") set -- "$@" "-q" ;;
+        "--help" | "-h") set -- "$@" "-h" ;;
+        *) set -- "$@" "${__arg}" ;;
+        esac
+    done
+
+    OPTIND=1
+    while getopts "hq" __opt; do
+        case "${__opt}" in
+        "h") perldoc core/${0} ;  return ;;
+        "q") __is_dry_run=1 ;;
+        esac
+    done
+    shift $(expr ${OPTIND} - 1)
+
+    local __workdir=${1}
+    local __pattern=${2}
+    local __replace=${3}
+
+    dlog "working directory: ${__workdir}"
+    dlog "find pattern: ${__pattern}"
+    dlog "replace pattern: ${__replace}"
+    dlog "dry-run: ${__is_dry_run}"
+
+    local __skip_begin=$(tput setaf 2)
+    local __skip_end=$(tput sgr0)
+
+    while read -r __line; do
+        __old="${__workdir}/${__line}"
+        __new=$(echo "${__old}" | sed -nE "s;${__pattern};${__replace};p")
+        
+        [[ -n ${__new} ]] && { f_is_debug && f_log "INFO" "${__old} --> ${__new}" ; }
+        [[ -n ${__new} ]] || { f_is_debug && f_log "WARN" "${__old} --- skipping" ; }
+    
+        if [[ -n ${__is_dry_run} ]]; then
+            [[ -n ${__new} ]] && echo "${__old} --> ${__new}"
+            [[ -n ${__new} ]] || printf "${__skip_begin}${__old} --- skipping${__skip_end}\n"
+        else 
+            [[ -n ${__new} ]] && mv "${__old}" "${__new}"
+        fi
+    done < <(ls -1 "${__workdir}")
+}
+
+[[ -z ${(%):-%x} ]] && f_mvrx ${@}
+
+alias mvrx='f_mvrx'
+
+: <<END_OF_DOCS
+
+Renames files in a working directory based on regular expressions.
+
+=head1 NAME
+
+f_mvrx--Renames files based on regular expressions.
+
+=head1 SYNOPSIS
+
+f_mvrx [OPTIONS] working-directory find-pattern replace-pattern
+
+=head1 ARGUMENTS
+
+=over
+
+=item working-directory
+
+The working directory in which the renaming is supposed to take place.
+
+=item find-pattern
+
+A regular expression pattern against all files in working-directory are matched.
+
+=item replace-pattern
+
+A regular expression pattern to be applied on matching filenames.
+
+=back
+
+=head1 OPTIONS
+
+=over
+
+=item --dry-run | -q
+
+Instead of renaming any file, the filename after renaming is printed.
+
+=item  --help, -h, -?
+
+Print this message.
+
+=back
+
+=head1 DESCRIPTION
+
+This function renames all files in working-directory matching find-pattern and
+by applying replace-pattern. Each filename in working-directory is preceded by 
+by working-directory
+
+=head1 EXAMPLES
+
+Let /some/path contain the files fileA, fileB, and fileC and only fileA, and
+fileC be renamed to new-fileA, new-fileB respectively
+
+source core/f_mvrx ; f_mvrx /some/path "(.*/)(file)(A|C)(.*)" "\1new-\2\3\4"  
+
+=head1 AUTHOR
+
+L<Remo Ronca|mailto:106963724+sobchak-security@users.noreply.github.com>
+
+=head1 KNOWN PROBLEMS
+
+As sed on macOS does not support non-capturing groups, inline options like
+(?i) for case insensitivity are not allowed. For this reason, the search
+pattern is enclosed in a group, thereby at least supporting, for example, 
+alternate matches.
+
+Note though, that the grouping sequence should never be altered be the search
+pattern.
+
+=head1 LICENSE AND COPYRIGHT
+
+MIT License
+
+=cut
+
+END_OF_DOCS
