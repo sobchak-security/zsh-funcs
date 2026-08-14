@@ -8,10 +8,8 @@
 SHELL := $(shell which zsh)
 # $(info SHELL ${SHELL})
 
-# this picks up every folder directly under the current working directory, 
-# excludes the .git subdirectory, and extracts the folder name from the relative
-# path ./<folder> 
-FOLDERS := $(shell find . -type d -depth 1 | grep -v '.*\.git' | sed -En 's;\./([^/]+.*);\1;p;')
+# this picks up every folder directly under the current working directory containing function files
+FOLDERS := $(sort $(patsubst %/,%,$(dir $(wildcard */f_*))))
 # $(info FOLDERS ${FOLDERS})
 
 TARGETS :=  $(patsubst %,$${ZDOTDIR}/%.zwc,${FOLDERS})
